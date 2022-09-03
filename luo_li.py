@@ -1,0 +1,199 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Pomodoro 番茄工作法 https://en.wikipedia.org/wiki/Pomodoro_Technique
+# ====== 🍅 Tomato Clock =======
+# ./tomato.py         # start a 25 minutes tomato clock + 5 minutes break
+# ./tomato.py -t      # start a 25 minutes tomato clock
+# ./tomato.py -t <n>  # start a <n> minutes tomato clock
+# ./tomato.py -b      # take a 5 minutes break
+# ./tomato.py -b <n>  # take a <n> minutes break
+# ./tomato.py -h      # help
+
+
+import sys
+import time
+import subprocess
+
+WORK_MINUTES = 25
+BREAK_MINUTES = 5
+
+
+def main():
+    try:
+        if len(sys.argv) <= 1:
+            print(f'裸李狂卷 {WORK_MINUTES} minutes. Ctrl+C to exit')
+            print('裸李：我暑假那个课终于出分了')
+            print('裸李：我太烂了')
+            print('裸李：差一分才能满绩')
+            print(
+                '''
+-!>6OQQQQHHHHHHHHHHHHNNNNNNNNNNNNNNNNNNNNNNNNNHHHHHHHNNNNNNHHHHHHHHHNNHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHNNHHHHNNHHHHHHHH
+->+C$QQQQQHHHHHHHHHHNNNNNNNNNNNNNNNNNNNNNNNNNNHHHHHHHNNNNNNHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHNNNHHHHHHHHHHHHHH
+-+6OQQQQQHHHHHHHHNNNNNNNNNNNNNNNNNNNNNNNNNNNNNHHHHHHHHHHHNHHNNHNHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHNNNHHHHHHHHHHHHH
+:7CQQQQHHHHHHHHHHHNNNNNNNNNNNNNNNNNNNNHHNNNNNNHHHHHHHHHHHHHHHHHHHHHQQQQQQQQQQQQQQQHHHHHQQQQHHHHHQQHHHHHHHHHHHHHHHHHHHHHH
+:C$$QQHHHHNNHHHHHHHNNNNNNNNNNNNNNNNNNNHHHHNNNHHHHHHQQQQQQQQQQ$$$$$$$$$$$$$$$QQQQQQQQQQQQQQQQQQQQQHHHHHHHHHHHHHHHHNHHHHHH
+!OQ$QQHHNNNNHHHNNNHHHHNNNNNNNNNNNNNNNHHHHHHHHQQQ$$$$$$OOOOOOOOOOOOOOOOO$$$$$$$$$$$$$$$$$$$$$$QQQQQQQQQQHHHHHHHHHNNNHHHHH
+!$Q$QQHHNNNHHNNHHHHHHHHHHHNNNNNHHHHHHQQQ$$$$OOOOOOOOCCCCCCCCCCCCCCCCCCCCCOOOOOOOOCCCCCCCOOOOOO$$$$$$$QQQQQQHHHHHHNNHHHHH
+>QQQQQHHNNNNNHHHHHHHHHHHHHHHNNNHHHQQQ$$$OOOOOOOOCCCCCCCCCC6666CCCCCCCCCCC666666666666CCCCCCCOOOOOOOOO$$$$$QQHHHHHHHHHHHH
+>QQQQHHNNNNNNHHHHHHHHHHHHHHHHHHHHQQ$$OOOCCCCCCCCCCCCC6666666666666666666777777777777666666CCCCCCCCCCCCOOOO$QQQQHHHHHHHHH
+>QQQQHHNNNNHHHHQQQQQHHHHHHHHHHHQQ$$$OOOOOCCCC66666666777777777777++++++++++++++++++77776666666666666CCCCCOO$QQQQHHHHHHHH
+>QQHHHNNNNNHHHQQ$$$$$QQQHHHHQQ$$$OOOOOOCCC66677777777+++++++++++>>>>>>>>>>>>>>>++++777777776666666666CCCCCOOO$$QQHHHHHHH
+>QQHHNNNNNHHQQQ$OOCCOOO$$QQQ$$OOCCCCC666777+++>>>++++++++++++>>>>>>>>>>>>>>>>>>>++++77777777776666666CCCCCCOOO$$QHHHHHHH
+>HHHHHNNNNHHHQQ$OOCCCCCOO$$$OOCCC66677+++>>!!!!!!!!!>>>>>>>>>>>>>+>>>>>>>>>!!>>>>++++77777777766666666666CCCOO$$QQHHHHHH
+>HHHHHNNHHHHHQ$$OOCC66666CCC66667777++++>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>!!!!!!>>>>+++++7777777666666666666CCCO$$QQHHHHHH
+>HHHHHHHHHHHQ$$OCC667777777+++++++++++++++++++++++++>>>>>>>>!!>>>>>>>>>!!!!!!!>>>>>++++++777777777666666666CCO$QQHHHHHHH
+>HHHHHHHHHHQQ$OCC6677777++++++++7777677777777777777+++++>>>>>>>>>>>>>>>>>>>>>>>>>>>>++++++++++7777777666666CCO$QQHHHHHHH
+>HHHHHHHHHQQ$OC666777++7776666666CCCCC66667766666677777777++++++++++++++777+++++++>+++++++++++++++777766666CCO$QQHHHHHHH
+>HHHHHHHQQ$OCC66677++76CCOOOOOOO$$$$OOOOOCCCCCCCCC6666666677766667777666666667777777777++++++++++++777666666CO$QQHHHHHHH
+>HHHHHHHQ$C6666777776O$$QQQQQHHHHHHHHHQQQ$$$$$OOOOCCCCCC666666666C6CCCCCCOOOOOOOOOOCCCCCC6666667777+77776666CCO$QQHHHHHH
++HHHHHH$OC677777766C$$QQQQQQHHHHHHHHHNNHHHHHQQQ$$$OOOOCCCCCCCCCCCCOOOOO$$$$QQQQQQQQQQQQ$$$$$OOOOCC67++7777666CO$QHHHHHHH
+>NHHHQ$OC6777++76CO$$$$OOOOOOOOO$$$$QQQHHHHHHHQQQ$$$OOOOOOOCCCOOOOO$$$$QQQQHHHHHHHHHHHHHHQQQ$$$$$$OC677777666CCO$QHHHHHH
+>NNHQ$C677++++76COOOOCCC66666677666CCOO$$$QQQQQQQ$$$$$OOOOOOOOOO$$$$$QQQQQQQHHHHHQQQQQQQQQ$$$$$$$$$OOC6677666666C$QQHHHH
+>HHH$C67+++7766CCCCCCCCC66666777776666CCCOOO$$$$$$$$$$$$$OOOOO$$$$$$$QQQ$$$$$$$$$OOCC66666CCCOOOOOO$OOOC666666666COQQHHH
+!$$OOCC66CCO$$$$$$OOO$$$$$$$$$$$OOOOOOOOOOOOO$$$$$$$$$$$$$OO$$$$$$$$$$$$$$$OOOOCC667+++++++7766CCCCOOOOCC666766666CO$QHH
+!CCC$QHHNNHHQ$OOOCCCCOOOOOOOOOOOOOOOO$$$$$QQQQQQ$$QQQ$$OOOOOOO$$$QQQQQQ$$$OOO$$OOCC66777777777767666CCCCCC666666666CO$QH
+!C6C$NMMNNHQO6776666CCOOOOOOO$$OOOOOOOO$$$QQQQQHHHHHQQQ$$OOO$$$QQQQQQQHHQQQQQQQQQQ$$$$$$$$$$OOOCCCCCCCCCCC6667776666CO$Q
+!C66OHNNNQ$C6776COOO$$$QQQQHHHHHHHHQQQQQ$$$$$$$$QQHNNNNNNHHHNNNHHHHHQQQQQQQQ$$$$$$OOOOOOO$$$$$$$QQQQQ$$$OOCC66777766CO$Q
+!C776OQHHQO6776CO$$QQQHHHHHHHHHHHHHHHHHQQQQ$$$$OO$QHNNNNNHHNNMNHQ$$$$$QQQQQQQQQQ$$$$$$$$$OOOOOOOOO$$QQHHHHQQ$OCC66666CO$
+!C7++76$QQC7+76CCOO$$$$$$$QQ$$$QQQQQQQQQ$$$$$$$$$$QHNQ$OOOOQHNNQ$OOO$$$$QQQQHHHHHHHHHHHQQQQQ$$$OOOOOOO$QHNNNNHHQ$OO$OOOC
+!6++>+7CQ$6+++7666CCOO$$$$$$$$OOOOOOOO$$$$$$$$$$$QHNH$C676COQNHQ$OOOO$$$$QQQQQQQHHHHHHHHHHHHHHHQQ$$OOCCO$HNMMMNQQQQQ$OCC
+!6++++7CQ$6+>++77776CO$$$$$$$$$$$$$$$$$$$$$$$$$QQHNH$6+>+76C$HNHQ$OOOOO$$$$$$$$$$$$$Q$$$$$$$QQQQQQQ$OCCC$HNNHHQ$OOOOCCCC
+!6++++76$$6++++++776COOOOOO$$$$$$$$$$$$OOOOCCO$QHHH$6>:::>+7OQNNHQ$$OOOOO$$$$$$$OOOOOOOOOOOOOOOOOO$$OCCC$HH$CC666666CCO$
+!677+++7O$C6++7777666CCCOOOOOOOOOOOOOOCCCC666C$QHH$6+!:::>+7C$HNHQQ$OOCCOOOO$$$$$$$$OOOOOOOOOOCCCCCC666OQQO67777666CCOO$
+!C667777CO$C7777666666CCCOOOOOOOOOOCCCCCC6666OQHQ$6+!:::!>+76CQHHQQ$OC6CCCCOOOOO$$$$$$$OOOOOOOCC666666C$Q$6777666CCCOO$$
+!C666776CO$O67766666666CCCOOOOOOCCCCCCCCC666COQQO6+>!!::!>+776OQHQ$OOC666CCCCOOOOOOOOOOOCCCCCCC6666676O$$C677766CCCCOO$$
+!C6666666COOOC6666666666CCCCCCCCC6666666CCCO$$OC6+>>>!::!>+7766OQQQ$C66666666CCCCCCCCCCC6666666666666C$$C677766CCCCCOOO$
+!66CCCCCCCCOOOOOCCCCCCCCCCCCCCC6666666COO$$$$$67+++>>!!!>>++776COQQQ$C666666666666666666666666666666O$$O66666CCCCCCCOOO$
+!CCCCCOOOOOOOOOOCCCC6666CCCCCCCCCCOOO$QQQQ$$OC7++++>>!!!>>+++776COQHQ$O6666666667777776666677777776C$$OC6666CCCCOCCOOO$$
+!CCCOOOOOOOOCCCCC666777766666CCCCOO$$$QQQ$OC67+++++>!!!>>++++7776C$QQHQ$OOOOCCCCC6666666CC6666666COOOCC666CCCCCCCCOOO$$Q
+!CCCOOOOOOOOCCCC666666666CCCCCCOOOOOO$$$OC677++77++>>!!>>++++7776CO$$QQQ$$$QQQQQ$$$$$$$$$$$$$$$OOOOCCCCCCCCCCCCCCOOOO$$Q
+!CCCOOOOOOOOCCCC66666666666666CCCOOOOOOC6777+++++++>>!!>>++++777776COO$$$$$$QQQQ$$$$$$$QQQQ$$$$$OOCCCCCCOOOOOOOOOOOOO$$Q
+!CCCOOOOOOOOCCCCC66666666666666CCCOOOC67777777777+++>>>>+++++7777+776CO$$OOOOOOOOOOOOOOO$$$$OOOOOOCCCCCCOOOOOOOCOOOOO$$Q
+!CCCOOOOOOOOOCCCCCC66666666666CCOOOOOC676666CC66666777777777766677+76CO$$OCCCCCCCCCCCCCCCCCCOOOOCCCCCCCCOOOOOOOOOOOOO$$$
+!CCCOOOOOOOOOCCCCCCCCCCCCCCCCCCCOOO$OOCCCOOOOOOOOCCCCCCCCCCCCCCCC6666COO$OOOOCCCCCC66666666CCCCCCCCCCCCCOOOOOOOOOOOOO$$$
+!OCCOOOOOOOOOOCCCCCCCCCCCCCOOOOOOO$$$$$$$$$$$$$$$OOOOOOOOOOOOOOOOOOOOOOOOO$OOOOCCCCCCCCCCCCCCCCCCCCCCCCCCOOOOOOOOOOOO$$$
+!OCCOOOOOOOOOOOOOOOOCCCCCCCOOOOOOOO$$$QQQQQQQQQQ$$OO$$$$$$$$$$$$$$$$OOOOOOOOOOOOOCCCCCCCCCCCCCCCCCCCCOCOOOOOOOOOOOOOOO$$
+!CCCOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO$QQQQQQQQQQQQ$$$$$QQQQQHHHHHQQ$$OCCCCCCOOOOOOOCCCCCCCCCCCCCCCCCOOOOOOOOOOOOOOOOOOOOO
+!CCCOOOOOOOOOOOOOOOOOOOOOOOOOOCCCCOO$QQHHHHHHHHHQQQQQHHHHHHHHHHHQ$$OC6777766COOOOCCCCCCCCCCCCCCCCOOOOOOOOOOOOOOOOOO$$OCC
+:6CCOOOOOOOOOOOOOOOOOOOOOOOOOCCCCCOO$$QQQQHHHHHHHHHHHHHHHQQ$$$$$$OOC66777776CCCCCCCCCCCCCCCCOOOCOOOOOOOOOOOOOOOOOOO$$OOC
+:6CCOOOOOOOOOOOOOOOOOOOOOOOOOOCCCOOO$$$$QQQQQQQQQQHHHHQQ$$OOOOOOOOCC667777766CCCCCCCCCCCCCCCCOOOOOOOOOOOOOOOOOOOOO$$$OOO
+:76COOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO$$$$$$$$$$$$QQQQ$$$OOOCCCCCCCCCCC666677666CCCCCCCCCCCCOCCOOOOOOOOOOOOOOOOOOOO$$$OCCO
+-+7COOOOOOOOOOOOOOOOOOOOOO$$$$$$OOOOOOOOO$$$$$$$$$$OOOOOOOOCCC666666CCCCCCC666CCCCCCCCCCCCCOOOOOOOOOOOOOOOOOOOOOO$OC7+++
+->7COOOOOOOOOOOOOOOOOOOOO$$$$$$$$OOOOOO$$$$$$$$$$$$OOOOOOOOOOCC666666CCCOOOCCCCCCCCCCCCCCCCOOOOOOOOOOOOOOOOOOOOOO$O6+>!>
+->+6OOOOOOOOOOOOOOOOOOOOO$$$$$$$$$$$$$$$$$$QQQQQQ$$$$$$$$$$$$$OOCCCCCCCCOOOOOCCCCCCCCCCCCCOOOOOOOOOOOOOOOOOOOOOOOOC+>>>>
+->+7COOOOOOOOOOOOOOOOOOOO$$$$$$QQQQQQQQQQQQQQHHQQQQQ$$QQQQQQQQQQ$$$$$$O$$$$$OOOCCCCCCCCCCCOOOOOOOOOOOOOOOOOOOOOOOC7>>>>>
+->>+6OOOOOOOOOOOOOOOOOOO$$$$$QQQHHHHHHHHHHHHHHHHHHQQQQQQHQQQQQQQHHHHHHHHQQQQ$$OOOCCCCCCCCCOOOOOOOOOOOOOOOOOOOOO$C7>>>>>>
+->>>7CO$$OOOOOOOOOOOOOOOO$$$$QQQQHHHQQQQQQQQQQHHHHHHHHHHHHHQQQQQQQQQHHHHHHQQQ$$OOCCCCCCCCOOOOOOOOOOOOOOOOOOOOOOC6+>>>>>>
+->>!+6OOOOOOO$$$$OOOOOOOOO$$$$$$$$$$$$$OOOOOOOOOOOO$$OOOOOOCCCCOOOOOOOO$$$$$$$$OOOCCCCCCOOOOOOOOOOOOOOOOOOOO$OC7+>!>>>>>
+->>>+76OOOOOO$$$OOOOOOOOOOOOO$$$$$$$$$$$OOOOCCCCC6666667777666CCCOOOOOOOOO$$$$OOOOOCCCOOOOOOOOOOOOOOOOOOOOO$OC6+>>>>>>>>
+->>>>>7CO$$$$$$$$$$$$$OOOOOOOOOO$$$$QQ$$$$OOOOOCCCCC6666666CCCOOOOOOOOCCCOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO$OC6+>>>>>>>>>
+->>>>>>7CO$$$$$$$$$$$$$$$OOOOOO$$$$$$$$Q$$$$$$$$$$$$$$OOOO$$$$$OOOOCCCCCCCCCOOOOOOOOOOOOOOOOOOOOOOOOOOOOO$$C7+>>>>>>>>>>
+->>>>>>>7CO$$$$$$$$$$$$$$$$$$$$O$$$$$$$$QQQQQQQQQQQQQQQQQQQQ$$$$OOOOOOCCCCCCCOOOOOOOOOOOOOOOOOOOO$OOO$$$$OC7+>>>>>>>>>>>
+->>>!!!>+7COO$OOOOOOOOOOOOOOOOOOOOOOOOOO$$$$$$$$$$Q$$$$$$$$$$$OOOOCCCCCCCCCCCCCCCCCCOOOOOOOOOOOOOOOOOOOOO6+>>>>>>>>>>>>>
+
+                '''
+            )
+            tomato(WORK_MINUTES, 'It is time to take a break')
+            print(f'🛀 break {BREAK_MINUTES} minutes. Ctrl+C to exit')
+            tomato(BREAK_MINUTES, 'It is time to work')
+
+        elif sys.argv[1] == '-t':
+            minutes = int(sys.argv[2]) if len(sys.argv) > 2 else WORK_MINUTES
+            print(f'李 裸 {minutes} minutes. Ctrl+C to exit')
+            print('我暑假那个课终于出分了')
+            print('我太烂了')
+            print('差一分才能满绩')
+            tomato(minutes, 'It is time to take a break')
+
+        elif sys.argv[1] == '-b':
+            minutes = int(sys.argv[2]) if len(sys.argv) > 2 else BREAK_MINUTES
+            print(f'🛀 break {minutes} minutes. Ctrl+C to exit')
+            tomato(minutes, 'It is time to work')
+
+        elif sys.argv[1] == '-h':
+            help()
+
+        else:
+            help()
+
+    except KeyboardInterrupt:
+        print('\n👋 goodbye')
+    except Exception as ex:
+        print(ex)
+        exit(1)
+
+
+def tomato(minutes, notify_msg):
+    start_time = time.perf_counter()
+    while True:
+        diff_seconds = int(round(time.perf_counter() - start_time))
+        left_seconds = minutes * 60 - diff_seconds
+        if left_seconds <= 0:
+            print('')
+            break
+
+        countdown = '{}:{} ⏰'.format(int(left_seconds / 60), int(left_seconds % 60))
+        duration = min(minutes, 25)
+        progressbar(diff_seconds, minutes * 60, duration, countdown)
+        time.sleep(1)
+
+    notify_me(notify_msg)
+
+
+def progressbar(curr, total, duration=10, extra=''):
+    frac = curr / total
+    filled = round(frac * duration)
+    print('\r', '李' * filled + '--' * (duration - filled), '[{:.0%}]'.format(frac), extra, end='')
+
+
+def notify_me(msg):
+    '''
+    # macos desktop notification
+    terminal-notifier -> https://github.com/julienXX/terminal-notifier#download
+    terminal-notifier -message <msg>
+
+    # ubuntu desktop notification
+    notify-send
+
+    # voice notification
+    say -v <lang> <msg>
+    lang options:
+    - Daniel:       British English
+    - Ting-Ting:    Mandarin
+    - Sin-ji:       Cantonese
+    '''
+
+    print(msg)
+    try:
+        if sys.platform == 'darwin':
+            # macos desktop notification
+            subprocess.run(['terminal-notifier', '-title', '李', '-message', msg])
+            subprocess.run(['say', '-v', 'Daniel', msg])
+        elif sys.platform.startswith('linux'):
+            # ubuntu desktop notification
+            subprocess.Popen(["notify-send", '李', msg])
+        else:
+            # windows?
+            # TODO: windows notification
+            pass
+
+    except:
+        # skip the notification error
+        pass
+
+
+def help():
+    appname = sys.argv[0]
+    appname = appname if appname.endswith('.py') else 'tomato'  # tomato is pypi package
+    print('====== 🍅 Tomato Clock =======')
+    print(f'{appname}         # start a {WORK_MINUTES} minutes tomato clock + {BREAK_MINUTES} minutes break')
+    print(f'{appname} -t      # start a {WORK_MINUTES} minutes tomato clock')
+    print(f'{appname} -t <n>  # start a <n> minutes tomato clock')
+    print(f'{appname} -b      # take a {BREAK_MINUTES} minutes break')
+    print(f'{appname} -b <n>  # take a <n> minutes break')
+    print(f'{appname} -h      # help')
+
+
+if __name__ == "__main__":
+    main()
